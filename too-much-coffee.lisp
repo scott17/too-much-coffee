@@ -1,14 +1,15 @@
-;;this is our main lisp file
-
-;; this is an edit
+;; Team TOO MUCH COFFEE
+;; Player Phase I
 
 
 ;; Package Definition
+
 (defpackage :too-much-coffee)
 (in-package :too-much-coffee)
 
 
 ;; Imports
+
 (import '(user::BeanTypes 
            user::BeanConversion
            user::game-deck-stats user::game-discards user::game-discard-stats 
@@ -22,3 +23,27 @@
            user::harvest-rate user::buy-third-bean-field
            user::is-singleton? user::is-multiple? user::is-empty?
            user::is-planted?))
+
+
+;; Required Functions
+
+(defun plant-card (player card game)
+  )
+
+(defun optionally-plant-card (player game)
+  )
+
+(defun handle-face-up-cards (player game)
+  )
+
+
+;; Utility Functions
+
+(defun choose-harvest (player game)
+  )
+
+(defun value (player card game)
+  )
+
+(defun at-risk? (player card game)
+  )
