@@ -1,0 +1,103 @@
+(plant-card (player card game))
+	for field in game->player->fields
+		if(field->beanType == card->beanType)
+			plant card in field
+			return
+	for field in game->player->fields
+		if(field==empty)
+			plant card in field
+			return
+	harvestChoice = (chose-harvest player game)
+	(harvest harvestChoice  game)
+	plant card in harvestChoice 
+	return
+
+
+(optionally-plant-card (player game))
+	if (at-risk? player game->player->next-card game == T)
+		return
+	else
+		for field in game->player->fields
+			if(field->beanType == game->player->next-card)
+				plant card in field
+				return
+		for field in game->player->fields
+			if(field==empty)
+				plant card in field
+				return
+		if ((value game->player->next-card) > (lowest-value player))
+			harvest lowest-value-field
+			plant in lowest-value-field
+
+
+(handle-face-up-cards (player game))
+	for card in face-up-cards
+		for field in game->player->fields
+			if(field->beanType == card->beanType)
+				plant card in field
+				remove card from face-up-cards
+
+	if ((length face-up-cards) = 0)
+		return
+
+	if ((length face-up-cards) > 1)
+		if( (value (player face-up-cards[0] game)) > (value (player face-up-cards[1] game)))
+			(swap face-up-cards[0] face-up-cards[1])
+		(plant-card (player face-up-cards[0] game))
+(plant-card (player face-up-cards[1] game))
+return
+	
+	(plant-card (player face-up-cards[0] game))
+		
+
+ - Harvests the least valuable field that it is legal to harvest, uses value and does not return anything. Modifies the game state so that the appropriate cards are in the discard pile and treasury.
+(chose-harvest (player game))
+	least-valuable-field = nil
+	for index in (legal-fields-to-harvest player->fields)
+		if (least-valuable-field == nil or ((value player player->fields[index] game) < (value player player->fields[least-valuable-field] game)))
+			least-valuable-field = index
+	//(harvest player least-valuable-field game)
+
+
+ - Gets the value of a card using our heuristic. Our heuristic determines the value of a card by taking the number of cards that we know still exist in the game (i.e. not in the discard pile, your hand, planted in fields and used as coins) and divide that number by the number of beans required to move to the next tier of coins for that bean and then finally multiply that number by the number of coins that will be got at the next tier.
+(value (player card game))
+	cards-in-play = BeanTypes[card->beanType] - game->coin-stats[number of 
+card->beanType] - game->discard-stats[number of card->beanType] - 1
+
+	beans-held = 0
+	for field in game->player->fields
+		if (field not empty and (field->beanType == card->beanType)
+			beans-held = field->length
+	for tier in BeanConversion[card->beanType]
+		if (tier not nil and beans-held < tier)
+			beans-to-next-tier = tier - beans-held
+			coins-earned = index of tier in BeanConversion[card->beanType]
+
+	return ((cards-in-play / beans-to-next-tier) * (coins-earned))
+
+HARVEST WHEN HIT MAX BEANS ON FIELD
+
+
+ - Determine whether or not planting the next card will put the most valuable field at risk (i.e. if we plant this card and two cards that match none of our fields are turned up, will we have to harvest this field)
+(at-risk? (player card game))
+	most-valuable-field = nil
+	for field in game->player->fields
+		if (field not empty and (most-valuable-field == nil or ((value player field[0] game) > (value player most-valuable-field[0] game))))
+			most-valuable-field = field
+
+	if (most-valuable-field == nil)
+		return nil
+		--all fields are empty
+
+	all-other-fields = players->fields with most-valuable-field removed
+	--may implement as a helper function?
+	if (empty field in all-other-fields)
+		return nil
+	if ((length most-valuable-field) == (length all-other-fields) == 1)
+		if (card->beanType == most-valuable-field->beanType)
+			return t
+		else
+			return nil
+	else
+		return nil
+
