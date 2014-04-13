@@ -98,13 +98,13 @@
      ; is no higher tier of coins, *USELESS-BEAN* to avoid divide-by-zero
      ; and make the bean useless relative to others (harvested early).
      (beans-to-next-tier (cond
-                           ((and (second convesion) (< (second conversion) beans-held))
+                           ((and (second conversion) (< beans-held (second conversion)))
                             (- (second conversion) beans-held))
-                           ((and (third conversion) (< (third conversion) beans-held))
+                           ((and (third conversion) (< beans-held (third conversion)))
                             (- (third conversion) beans-held))
-                           ((and (fourth conversion) (< (fourth conversion) beans-held))
+                           ((and (fourth conversion) (< beans-held (fourth conversion)))
                             (- (fourth conversion) beans-held))
-                           ((and (fifth conversion) (< (fifth conversion) beans-held))
+                           ((and (fifth conversion) (< beans-held (fifth conversion)))
                             (- (fifth conversion) beans-held))
                            (t *USELESS-BEAN*)))
 
