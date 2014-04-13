@@ -28,6 +28,24 @@
 ;; Required Functions
 
 (defun plant-card (player card game)
+  (let ((same-field (assoc card (player-fields player))))
+    (if (not (equal same-field nil))
+      (progn
+        (plant card player (position same-field (player-fields player)))
+        (return-form plant-card))))
+
+  (loop for n in '(0 1 2) do
+        (progn
+          (if (and (is-empty? (nth n (player-fields player)))
+                   (or (equal (numfields player) 3)
+                       (not (equal n 2))))
+            (progn
+              (plant card player n)
+              (return-from plant-card)))))
+
+  (let ((harvest-choice (choose-harvest player game)))
+    (harvest player harvest-choice game)
+    (plant card player harvest-choice))
   )
 
 (defun optionally-plant-card (player game)
