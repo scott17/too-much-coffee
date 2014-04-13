@@ -39,8 +39,15 @@
 
 ;; Utility Functions
 
-(defun choose-harvest (player game)
-  )
+(defun choose-harvest (player game &aux least-valuable-field)
+  "Determines the least valuable field that is legal to harvest."
+  (loop for f in (legal-fields-to-harvest (player-fields player)) do
+        (if (or
+              (equal least-valuable-field nil)
+              (< (value player (car (nth f (player-fields player))) game)
+                 (value player (car (nth least-value-field (player-fields player))) game)))
+          (setf least-valuable-field f)))
+  least-valuable-field)
 
 ; Value to force a useless bean to a very small heuristic value.
 ; Avoids divide-by-zero errors if we hold enough beans to
