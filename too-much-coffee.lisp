@@ -42,8 +42,32 @@
 (defun choose-harvest (player game)
   )
 
+(defconstant *USELESS-BEAN* 1000000)
+
 (defun value (player card game)
-  )
+  (let* ((cards-in-play (+ (cdr (assoc card) BeanTypes)
+                           (- (cdr (assoc card (game-coin-stats game))))
+                           (- (cdr (assoc card (game-discard-stats game))))
+                           (- 1)))
+
+         (held-field (assoc card (player-fields player)))
+         (conversion (assoc card BeanConversion))
+
+         (beans-held (length held-field))
+         (beans-to-next-tier (cond
+                               ((and (second convesion) (< (second conversion) beans-held))
+                                (- (second conversion) beans-held))
+                               ((and (third conversion) (< (third conversion) beans-held))
+                                (- (third conversion) beans-held))
+                               ((and (fourth conversion) (< (fourth conversion) beans-held))
+                                (- (fourth conversion) beans-held))
+                               ((and (fifth conversion) (< (fifth conversion) beans-held))
+                                (- (fifth conversion) beans-held))
+                               (t *USELESS-BEAN*)))
+
+         (coins-earned (harvest-rate held-field)))
+
+    (* (/ cards-in-play beans-to-next-tier) coins-earned)))
 
 (defun at-risk? (player card game)
   )
