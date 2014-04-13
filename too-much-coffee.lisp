@@ -28,12 +28,15 @@
 ;; Required Functions
 
 (defun plant-card (player card game)
+  "Plants the required card."
+  ; First attempt to plant the card into a field containing the same card type.
   (let ((same-field (assoc card (player-fields player))))
     (if (not (equal same-field nil))
       (progn
         (plant card player (position same-field (player-fields player)))
         (return-form plant-card))))
 
+  ; Then, attempt to plant it into an empty field.
   (loop for n in '(0 1 2) do
         (progn
           (if (and (is-empty? (nth n (player-fields player)))
@@ -43,10 +46,10 @@
               (plant card player n)
               (return-from plant-card)))))
 
+  ; Finally, harvest the least-value field and plant the card there.
   (let ((harvest-choice (choose-harvest player game)))
     (harvest player harvest-choice game)
-    (plant card player harvest-choice))
-  )
+    (plant card player harvest-choice)))
 
 (defun optionally-plant-card (player game)
   )
