@@ -40,7 +40,7 @@
   (loop for n in '(0 1 2) do
         (progn
           (if (and (is-empty? (nth n (player-fields player)))
-                   (or (equal (numfields player) 3)
+                   (or (equal (player-numfields player) 3)
                        (not (equal n 2))))
             (progn
               (plant card player n)
