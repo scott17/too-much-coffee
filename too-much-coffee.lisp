@@ -1,3 +1,4 @@
+
 ;; Team TOO MUCH COFFEE
 ;; Player Phase I
 
@@ -52,7 +53,26 @@
     (plant card player harvest-choice)))
 
 (defun optionally-plant-card (player game)
-  )
+  ;checks for at risk
+  (if (at-risk? player (nth i (player-hand player)))
+    ;if we are at risk, return from the function
+    (return-from)
+    ;if not, perform a series of loops
+    (progn
+      ;check to see if there is a matching field
+      (for i in (length (player-fields player))
+        (if (eq field ( (player-hand player)))
+          (progn
+            (plant card player i)
+            (return-from))))
+      ;see if there is an empty field, if so plant
+      (for i in (length (player-fields player))
+        (if (eq (nth i (player-fields player)) nil)
+          (progn
+            (plant card player i)
+            (return-from))))
+      ;the last step is harvesting tyhe least valuable field, which is what harvest-field does
+      (harvest player (choose-harvest player game) game))))
 
 (defun handle-face-up-cards (player game)
   )
