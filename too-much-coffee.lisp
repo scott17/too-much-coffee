@@ -1,4 +1,3 @@
-
 ;; Team TOO MUCH COFFEE
 ;; Player Phase I
 
@@ -35,7 +34,7 @@
     (if (not (equal same-field nil))
       (progn
         (plant card player (position same-field (player-fields player)))
-        (return-form plant-card))))
+        (return-from plant-card))))
 
   ; Then, attempt to plant it into an empty field.
   (loop for n in '(0 1 2) do
@@ -71,10 +70,17 @@
           (progn
             (plant card player i)
             (return-from))))
-      ;the last step is harvesting tyhe least valuable field, which is what harvest-field does
+      ;the last step is harvesting the least valuable field, which is what harvest-field does
       (harvest player (choose-harvest player game) game))))
 
+
+
 (defun handle-face-up-cards (player game)
+    ;guarenteed to work
+    ;stupid
+    ;will be changed later before the final submit
+    (plant-card player (pop (player-faceup player)) game)
+    (plant-card player (pop (player-faceup player)) game)
   )
 
 
@@ -135,4 +141,8 @@
     (* (/ cards-in-play beans-to-next-tier) coins-earned)))
 
 (defun at-risk? (player card game)
+    ; Always returns true
+    ; Just here to get the program to work
+    ; Will be changed before the final submit
+    (= 1 1)
   )
