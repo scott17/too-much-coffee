@@ -51,25 +51,30 @@
     (harvest player harvest-choice game)
     (plant card player harvest-choice)))
 
+(defun get-first-card (player)
+  (car (player-hand player)))
+
 (defun optionally-plant-card (player game)
   ;checks for at risk
-  (if (at-risk? player (nth i (player-hand player)))
+  (if (at-risk? player (get-first-card player) game)
     ;if we are at risk, return from the function
-    (return-from)
+    (return-from optionally-plant-card)
     ;if not, perform a series of loops
     (progn
       ;check to see if there is a matching field
       (for i in (length (player-fields player))
-        (if (eq field ( (player-hand player)))
+        (if (eq field (player-hand player))
           (progn
             (plant card player i)
-            (return-from))))
+            (return-from optionally-plant-card))
+          nil))
       ;see if there is an empty field, if so plant
       (for i in (length (player-fields player))
         (if (eq (nth i (player-fields player)) nil)
           (progn
             (plant card player i)
-            (return-from))))
+            (return-from optionally-plant-card))
+          nil))
       ;the last step is harvesting the least valuable field, which is what harvest-field does
       (harvest player (choose-harvest player game) game))))
 
@@ -92,7 +97,7 @@
         (if (or
               (equal least-valuable-field nil)
               (< (value player (car (nth f (player-fields player))) game)
-                 (value player (car (nth least-value-field (player-fields player))) game)))
+                 (value player (car (nth least-valuable-field (player-fields player))) game)))
           (setf least-valuable-field f)))
   least-valuable-field)
 
@@ -106,7 +111,7 @@
   (let*
     ; Calculate the number of cards of this type that are not
     ; in a field or held in a player's hand.
-    ((cards-in-play (+ (cdr (assoc card) BeanTypes)
+    ((cards-in-play (+ (cdr (assoc card BeanTypes)); not sure what is supposed to be here
                        (- (cdr (assoc card (game-coin-stats game))))
                        (- (cdr (assoc card (game-discard-stats game))))
                        (- 1)))
