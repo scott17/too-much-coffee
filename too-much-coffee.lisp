@@ -84,8 +84,40 @@
     ;guarenteed to work
     ;stupid
     ;will be changed later before the final submit
-    (plant-card player (pop (player-faceup player)) game)
-    (plant-card player (pop (player-faceup player)) game)
+    ;(plant-card player (pop (player-faceup player)) game)
+    ;(plant-card player (pop (player-faceup player)) game)
+    
+    (progn 
+           (setq first-card (pop (player-faceup player)))
+           (setq second-card (pop (player-faceup player)))
+           (let ((same-field (assoc first-card (player-fields player))))
+                      (if (not (equal same-field nil))
+                       (progn
+                                  (plant-card player first-card)
+                                  (setq first-card nil))))
+           (let ((same-field (assoc second-card (player-fields player))))
+                      (if (not (equal same-field nil))
+                       (progn
+                                 (plant-card player second-card)
+                                  (setq second-card nil))))
+           (if (and (equal first-card nil) (equal second-card nil))
+                      (return-from handle-face-up-cards))
+           (if (and (not (equal first-card nil)) (not (equal (second-card nil))))
+                      (if (> (value player first-card game) (value player second-card game))
+                                 (progn
+                                            (plant-card player second-card)
+                                            (plant-card player first-card)
+                                            (return-from handle-face-up-cards)))
+                      (else
+                                 (progn
+                                            (plant-card player first-card)
+                                            (plant-card player second-card)
+                                            (return-from handle-face-up-cards))))
+           (if (not (equal first-card nil))
+                      (plant-card player first-card))
+           (else
+                      (plant-card player second-card)))
+                                 
   )
 
 
