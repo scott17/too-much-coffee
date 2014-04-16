@@ -43,9 +43,10 @@
 	if ((length face-up-cards) > 1)
 		if( (value (player face-up-cards[0] game)) > (value (player face-up-cards[1] game)))
 			(swap face-up-cards[0] face-up-cards[1])
+			
 		(plant-card (player face-up-cards[0] game))
-(plant-card (player face-up-cards[1] game))
-return
+		(plant-card (player face-up-cards[1] game))
+		return
 	
 	(plant-card (player face-up-cards[0] game))
 		
