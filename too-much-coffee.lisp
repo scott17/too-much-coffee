@@ -146,8 +146,53 @@
     (* (/ cards-in-play beans-to-next-tier) coins-earned)))
 
 (defun at-risk? (player card game)
-    ; Always returns true
-    ; Just here to get the program to work
-    ; Will be changed before the final submit
-    (= 1 1)
-  )
+  ; Check if card matches the type of any field. If not, return, no risk.
+  (if (not (assoc card (player-fields player)))
+    (return-from at-risk? nil))
+
+  ; Check if there is an empty field.
+  (loop for f in '(0 1 2) do
+        (if (and (or (equal (player-numfields player) 3)
+                     (not (equal f 2)))
+                 (is-empty? (nth f (player-fields player))))
+          (return-from at-risk? nil)))
+
+  ; Pretend to plant the card.
+  (let*
+    ((pretend-fields (copy-list (player-fields player)))
+     (matching-field (position (assoc card pretend-fields) pretend-fields)))
+
+    (push card (nth matching-field pretend-fields))
+
+    ; Find the most valuable field.
+    (setf most-valuable-field nil)
+    (loop for f in '(0 1 2) do
+          (if (and (not (equal (nth f pretend-fields) nil))
+                   (or (equal most-valuable-field nil)
+                       (> (value player (nth f pretend-fields) game)
+                          (value player most-valuable-field game))))
+            (setf most-valuable-field f)))
+
+    ; Find the other fields.
+    (setf other-fields '(0 1 2))
+    (setf other-fields (remove most-valuable-field other-fields))
+    (if (not (equal (player-numfields player) 3))
+      (setf other-fields (remove 2 other-fields)))
+
+    ; Are the other fields singletons?
+    (setf singletons t)
+    (loop for f in other-fields do
+          (if (not (is-singleton? (nth f pretend-fields)))
+            (setf singletons nil)))
+
+    ; If not all singletons, no risk.
+    (if (not singletons)
+      (return-from at-risk? nil))
+
+    ; 2 in one field 1 in current
+    ; RISK
+    ; if we reveal two cards, we must harvest the field we planted
+
+    ; ASSUME RISK otherwise
+    ; fix it later
+    t))
