@@ -62,14 +62,14 @@
     ;if not, perform a series of loops
     (progn
       ;check to see if there is a matching field
-      (for i in (length (player-fields player))
+      (loop for i in (length (player-fields player)) do
         (if (eq field (player-hand player))
           (progn
             (plant card player i)
             (return-from optionally-plant-card))
           nil))
       ;see if there is an empty field, if so plant
-      (for i in (length (player-fields player))
+      (loop for i in (length (player-fields player)) do
         (if (eq (nth i (player-fields player)) nil)
           (progn
             (plant card player i)
@@ -96,12 +96,12 @@
            (let ((same-field (assoc first-card (player-fields player))))
                       (if (not (equal same-field nil))
                        (progn
-                                  (plant-card player first-card)
+                                  (plant-card player first-card game)
                                   (setq first-card nil))))
            (let ((same-field (assoc second-card (player-fields player))))
                       (if (not (equal same-field nil))
                        (progn
-                                 (plant-card player second-card)
+                                 (plant-card player second-card game)
                                   (setq second-card nil))))
            ; If we planted both of the cards we are done
            (if (and (equal first-card nil) (equal second-card nil))
@@ -114,21 +114,21 @@
                       ;   it will be in the fields
                       (if (> (value player first-card game) (value player second-card game))
                                  (progn
-                                            (plant-card player second-card)
-                                            (plant-card player first-card)
+                                            (plant-card player second-card game)
+                                            (plant-card player first-card game)
                                             (return-from handle-face-up-cards))
                       ;else
                       ; Plant the first card first and the second last
                                  (progn
-                                            (plant-card player first-card)
-                                            (plant-card player second-card)
+                                            (plant-card player first-card game)
+                                            (plant-card player second-card game)
                                             (return-from handle-face-up-cards))))
            ; Finally, if the first isn't planted yet,
            ;  plant it.
            (if (not (equal first-card nil))
-                      (plant-card player first-card)
+                      (plant-card player first-card game)
            ; Else, plant the second card
-                      (plant-card player second-card))
+                      (plant-card player second-card game))
                                  
   ))
 
