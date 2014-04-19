@@ -130,7 +130,7 @@
            ; Else, plant the second card
                       (plant-card player second-card))
                                  
-  )
+  ))
 
 
 ;; Utility Functions
