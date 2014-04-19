@@ -2,7 +2,10 @@
 ;; 
 ;; bohnanza.lisp - main game engine for CMSC 471 project
 ;; (c) Marie desJardins 2014
-;; VERSION 1 - ALPHA VERSION - Distributed 3/2/14
+;; VERSION 3.0 - GAMMA VERSION - Distributed 4/17/14
+;;   Changes from alpha: increments game-shuffles and game-rounds
+;;   Changes from beta:  fixes deck counting error
+;;   Changes from beta-prime: add error checking for plant-card-at-front & OPTIONALLY-PLANT-CARD functions
 ;;
 ;; In the tournament, the game will be played with 3 players
 ;; Deviations from standard rules:
@@ -182,26 +185,47 @@
     (print-round-summary game)
 
     (loop named gameloop
-	  while (game-deck game)
-	  do (loop for p in (game-players game)
-		   do
-		   (progn
-		     (if (player-hand p)
-			 (plant-card-at-front p game))
-		     (if (player-hand p)
-			 (funcall (player-fn p "OPTIONALLY-PLANT-CARD") p game))
-		     (if (not (deal-to-player p game 'faceup))
-			 (return-from gameloop))
-		     (if (not (deal-to-player p game 'faceup))
-			 (return-from gameloop))
-		     (funcall (player-fn p "HANDLE-FACE-UP-CARDS") p game)
-		     (if (not (deal-to-player p game 'hand))
-			 (return-from gameloop))
-		     (if (not (deal-to-player p game 'hand))
-			 (return-from gameloop))
-		     (if (not (deal-to-player p game 'hand))
-			 (return-from gameloop))
-		     ))
+	  while (or (game-deck game) (<= (game-shuffles game) 3))
+	  do (progn
+	       (incf (game-rounds game))
+	       (loop for p in (game-players game)
+		     do
+		     (progn
+		       (if (player-hand p)
+			   (progn  
+               ;;add error checking, make sure player do plant the first card
+               ;;get a copy of player's cards in hand and fields status
+               (setf pre-hand (copy-list (player-hand p)))
+               (setf pre-fields (copy-list (player-fields p)))
+               ;;call the plant-card-at-front function
+			   (plant-card-at-front p game)
+               ;;call check-planted to check if player did plant the first card 
+               (if (not (check-planted pre-hand (player-hand p) pre-fields (player-fields p) (car pre-hand))) 
+               (error "~% The first card ~s in player ~s 's hand was not planted correctly ~%" (car pre-hand) (player-name p))) 
+              ))
+		       (if (player-hand p)
+			   (progn
+               (setf pre-hand (copy-list (player-hand p)))
+               (setf pre-fields (copy-list (player-fields p)))
+               ;;call optionally-plant-card
+               (funcall (player-fn p "OPTIONALLY-PLANT-CARD") p game)
+               (if (and (or (not (equal pre-hand (player-hand p)))(not (equal pre-fields (player-fields p)))) 
+                        (not (check-planted pre-hand (player-hand p) pre-fields (player-fields p) (car pre-hand))))
+                 (error "~% The optional card ~s in player ~s 's hand was not planted correctly ~%" (car pre-hand) (player-name p))
+                 )
+               ))
+		       (if (not (deal-to-player p game 'faceup))
+			   (return-from gameloop))
+		       (if (not (deal-to-player p game 'faceup))
+			   (return-from gameloop))
+		       (funcall (player-fn p "HANDLE-FACE-UP-CARDS") p game)
+		       (if (not (deal-to-player p game 'hand))
+			   (return-from gameloop))
+		       (if (not (deal-to-player p game 'hand))
+			   (return-from gameloop))
+		       (if (not (deal-to-player p game 'hand))
+			   (return-from gameloop))
+		       )))
 	  (print-round-summary game))
 
     ;; Harvest all remaining fields
@@ -211,6 +235,19 @@
 
     (print-game-summary game)))
 
+(defun check-planted (pre-hand post-hand pre-fields post-fields card-to-plant)
+  ;;check if there is one less card in player's hand
+  (and (eq (- (length pre-hand) (length post-hand)) 1) 
+    ;;check if player did plant the card: just plant if fits, otherwise harvest then plant.
+    (or (eq (- (length (first post-fields)) (length (first pre-fields))) 1)  
+        (eq (- (length (second post-fields)) (length (second pre-fields))) 1)      
+        (eq (- (length (third post-fields)) (length (third pre-fields))) 1)
+        (and (not (bean-fits card-to-plant (first pre-fields))) (is-singleton? (first post-fields)) (eq card-to-plant (car (first post-fields))))
+        (and (not (bean-fits card-to-plant (second pre-fields))) (is-singleton? (second post-fields)) (eq card-to-plant (car (second post-fields))))
+        (and (not (bean-fits card-to-plant (third pre-fields))) (is-singleton? (third post-fields)) (eq card-to-plant (car (third post-fields))))
+      )
+     )
+  )
 
 (defun print-game-summary (game)
   (format t "~%END OF GAME!~%~%")
@@ -242,11 +279,14 @@
 (defun deal-to-player (player game where)
   ;; See if we need to shuffle the discard pile.
   (cond ((and (not (game-deck game)) (>= (game-shuffles game) 3))
-	 (return nil))
+	 (return-from deal-to-player nil))
 	((not (game-deck game))
 	 (setf (game-deck game) (randomize (game-discards game)))
-	 (setf (game-deck-stats game) (game-discard-stats game))
-	 (setf (game-discard-stats game) (empty-bean-stats))))
+	 (incf (game-shuffles game))
+	 (setf (game-deck-stats game) (copy-tree (game-discard-stats game)))
+	 (setf (game-discards game) nil)
+	 (setf (game-discard-stats game) (empty-bean-stats))
+	 ))
 
   ;; If the deck is still empty, then the discard pile was empty,
   ;; and so we simply end the game -- this would be very surprising,
