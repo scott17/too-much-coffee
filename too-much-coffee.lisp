@@ -63,14 +63,14 @@
     ;if not, perform a series of loops
     (progn
       ;check to see if there is a matching field
-      (loop for i from 0 to (- 1 (length (player-fields player))) do
+      (loop for i from 0 to (- 1 (player-numfields player)) do
         (if (eq field (player-hand player))
           (progn
             (plant card player i)
             ; (return-from optionally-plant-card))
           nil))
       ;see if there is an empty field, if so plant
-      (loop for i from 0 to (- 1 (length (player-fields player))) do
+      (loop for i from 0 to (- 1 (player-numfields player)) do
         (if (eq (nth i (player-fields player)) nil)
           (progn
             (plant card player i)
