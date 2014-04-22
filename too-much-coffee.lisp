@@ -64,76 +64,76 @@
     (progn
       ;check to see if there is a matching field
       (loop for i from 0 to (- 1 (player-numfields player)) do
-        (if (eq field (player-hand player))
-          (progn
-            (plant card player i)
-            ; (return-from optionally-plant-card))
-          nil))
-      ;see if there is an empty field, if so plant
-      (loop for i from 0 to (- 1 (player-numfields player)) do
-        (if (eq (nth i (player-fields player)) nil)
-          (progn
-            (plant card player i)
-            ; (return-from optionally-plant-card))
-          nil))
-      ; the last step is harvesting the least valuable field, which is what harvest-field does
-      ; what was I on about?
-      ; (harvest player (choose-harvest player game) game)
-      )))))
+            (if (eq field (player-hand player))
+              (progn
+                (plant card player i)
+                ; (return-from optionally-plant-card))
+                nil))
+            ;see if there is an empty field, if so plant
+            (loop for i from 0 to (- 1 (player-numfields player)) do
+                  (if (eq (nth i (player-fields player)) nil)
+                    (progn
+                      (plant card player i)
+                      ; (return-from optionally-plant-card))
+                      nil))
+                  ; the last step is harvesting the least valuable field, which is what harvest-field does
+                  ; what was I on about?
+                  ; (harvest player (choose-harvest player game) game)
+                  )))))
 
 
 
 (defun handle-face-up-cards (player game)
-    ;These first two are guarenteed to work
-    ;They are stupid
-    ;This will be changed later before the final submit
-    ;(plant-card player (pop (player-faceup player)) game)
-    ;(plant-card player (pop (player-faceup player)) game)
-    
-    
-    (progn 
-           ; First get the two cards 
-           (setq first-card (pop (player-faceup player))
-                 second-card (pop (player-faceup player)))
-           ; Plant the cards in matching fields if they exist
-           (let ((same-field (assoc first-card (player-fields player))))
-                      (if (not (equal same-field nil))
-                       (progn
-                                  (plant-card player first-card game)
-                                  (setq first-card nil))))
-           (let ((same-field (assoc second-card (player-fields player))))
-                      (if (not (equal same-field nil))
-                       (progn
-                                 (plant-card player second-card game)
-                                  (setq second-card nil))))
-           ; If we planted both of the cards we are done
-           (if (and (equal first-card nil) (equal second-card nil))
-                      (return-from handle-face-up-cards))
-           ; If both aren't planted yet
-           (if (and (not (equal first-card nil)) (not (equal second-card nil)))
-                      ; If the first is more valuable than the second,
-                      ;   plant the second card first and then the first card.
-                      ;   You want the most valuable card planted last to ensure that
-                      ;   it will be in the fields
-                      (if (> (value player first-card game) (value player second-card game))
-                                 (progn
-                                            (plant-card player second-card game)
-                                            (plant-card player first-card game)
-                                            (return-from handle-face-up-cards))
-                      ;else
-                      ; Plant the first card first and the second last
-                                 (progn
-                                            (plant-card player first-card game)
-                                            (plant-card player second-card game)
-                                            (return-from handle-face-up-cards))))
-           ; Finally, if the first isn't planted yet,
-           ;  plant it.
-           (if (not (equal first-card nil))
-                      (plant-card player first-card game)
-           ; Else, plant the second card
-                      (plant-card player second-card game))
-                                 
-  ))
+  ;These first two are guarenteed to work
+  ;They are stupid
+  ;This will be changed later before the final submit
+  ;(plant-card player (pop (player-faceup player)) game)
+  ;(plant-card player (pop (player-faceup player)) game)
+
+
+  (progn 
+    ; First get the two cards 
+    (setq first-card (pop (player-faceup player))
+          second-card (pop (player-faceup player)))
+    ; Plant the cards in matching fields if they exist
+    (let ((same-field (assoc first-card (player-fields player))))
+      (if (not (equal same-field nil))
+        (progn
+          (plant-card player first-card game)
+          (setq first-card nil))))
+    (let ((same-field (assoc second-card (player-fields player))))
+      (if (not (equal same-field nil))
+        (progn
+          (plant-card player second-card game)
+          (setq second-card nil))))
+    ; If we planted both of the cards we are done
+    (if (and (equal first-card nil) (equal second-card nil))
+      (return-from handle-face-up-cards))
+    ; If both aren't planted yet
+    (if (and (not (equal first-card nil)) (not (equal second-card nil)))
+      ; If the first is more valuable than the second,
+      ;   plant the second card first and then the first card.
+      ;   You want the most valuable card planted last to ensure that
+      ;   it will be in the fields
+      (if (> (value player first-card game) (value player second-card game))
+        (progn
+          (plant-card player second-card game)
+          (plant-card player first-card game)
+          (return-from handle-face-up-cards))
+        ;else
+        ; Plant the first card first and the second last
+        (progn
+          (plant-card player first-card game)
+          (plant-card player second-card game)
+          (return-from handle-face-up-cards))))
+    ; Finally, if the first isn't planted yet,
+    ;  plant it.
+    (if (not (equal first-card nil))
+      (plant-card player first-card game)
+      ; Else, plant the second card
+      (plant-card player second-card game))
+
+    ))
 
 
 ;; Utility Functions
