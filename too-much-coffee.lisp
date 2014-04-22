@@ -158,7 +158,7 @@
   (let*
     ; Calculate the number of cards of this type that are not
     ; in a field or held in a player's hand.
-    ((cards-in-play (+ (cdr (assoc card BeanTypes)); not sure what is supposed to be here
+    ((cards-in-play (+ (cdr (assoc card BeanTypes))
                        (- (cdr (assoc card (game-coin-stats game))))
                        (- (cdr (assoc card (game-discard-stats game))))
                        (- 1)))
@@ -187,7 +187,9 @@
                            (t *USELESS-BEAN*)))
 
      ; Number of coins earned if we harvest the field.
-     (coins-earned (harvest-rate held-field)))
+     (coins-earned (if (not (equal held-field nil))
+                     (harvest-rate held-field)
+                     1)))
 
     ; Heuristic calcuation.
     (* (/ cards-in-play beans-to-next-tier) coins-earned)))
@@ -216,8 +218,8 @@
     (loop for f in '(0 1 2) do
           (if (and (not (equal (nth f pretend-fields) nil))
                    (or (equal most-valuable-field nil)
-                       (> (value player (nth f pretend-fields) game)
-                          (value player most-valuable-field game))))
+                       (> (value player (car (nth f pretend-fields)) game)
+                          (value player (car (nth most-valuable-field pretend-fields)) game))))
             (setf most-valuable-field f)))
 
     ; Find the other fields.
