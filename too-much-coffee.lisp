@@ -44,7 +44,7 @@
                        (not (equal n 2))))
             (progn
               (plant card player n)
-              ; (return-from plant-card)
+              (return-from plant-card)
               ))))
 
   ; Finally, harvest the least-value field and plant the card there.
