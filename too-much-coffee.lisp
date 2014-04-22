@@ -28,7 +28,7 @@
 ;; Required Functions
 
 (defun plant-card (player card game)
-  "Plants the required card."
+  ; "Plants the required card."
   ; First attempt to plant the card into a field containing the same card type.
   (let ((same-field (assoc card (player-fields player))))
     (if (not (equal same-field nil))
@@ -44,7 +44,8 @@
                        (not (equal n 2))))
             (progn
               (plant card player n)
-              (return-from plant-card)))))
+              ; (return-from plant-card)
+              ))))
 
   ; Finally, harvest the least-value field and plant the card there.
   (let ((harvest-choice (choose-harvest player game)))
@@ -62,21 +63,23 @@
     ;if not, perform a series of loops
     (progn
       ;check to see if there is a matching field
-      (loop for i in (length (player-fields player)) do
+      (loop for i from 0 to (- 1 (length (player-fields player))) do
         (if (eq field (player-hand player))
           (progn
             (plant card player i)
-            (return-from optionally-plant-card))
+            ; (return-from optionally-plant-card))
           nil))
       ;see if there is an empty field, if so plant
-      (loop for i in (length (player-fields player)) do
+      (loop for i from 0 to (- 1 (length (player-fields player))) do
         (if (eq (nth i (player-fields player)) nil)
           (progn
             (plant card player i)
-            (return-from optionally-plant-card))
+            ; (return-from optionally-plant-card))
           nil))
-      ;the last step is harvesting the least valuable field, which is what harvest-field does
-      (harvest player (choose-harvest player game) game))))
+      ; the last step is harvesting the least valuable field, which is what harvest-field does
+      ; what was I on about?
+      ; (harvest player (choose-harvest player game) game)
+      )))))
 
 
 
@@ -90,8 +93,8 @@
     
     (progn 
            ; First get the two cards 
-           (setq first-card (pop (player-faceup player)))
-           (setq second-card (pop (player-faceup player)))
+           (setq first-card (pop (player-faceup player))
+                 second-card (pop (player-faceup player)))
            ; Plant the cards in matching fields if they exist
            (let ((same-field (assoc first-card (player-fields player))))
                       (if (not (equal same-field nil))
@@ -107,7 +110,7 @@
            (if (and (equal first-card nil) (equal second-card nil))
                       (return-from handle-face-up-cards))
            ; If both aren't planted yet
-           (if (and (not (equal first-card nil)) (not (equal (second-card nil))))
+           (if (and (not (equal first-card nil)) (not (equal second-card nil)))
                       ; If the first is more valuable than the second,
                       ;   plant the second card first and then the first card.
                       ;   You want the most valuable card planted last to ensure that
