@@ -186,9 +186,9 @@
 				"viable is a list of indices in our hand where we have to card"
 				(let ((viable (viable-trade player trade)))
 					"If the trade is viable and we have the to bean type in our field"
-					 (if (and viable ((assoc (trade-to-card trade) (player-fields player))))
+					 (if (and viable ((assoc (trade-from-card trade) (player-fields player))))
 						"If the from card matches one of our fields"
-						 (if (assoc (trade-from-card trade) (player-fields player))
+						 (if (assoc (trade-to-card trade) (player-fields player))
 							"If it does, accept the trade, but trade the last"
 							(push (list player 1 (last viable))
 								(trade-info trade))
@@ -200,7 +200,7 @@
 						)
 				)
 			"If the trade is a donation and the to card matches one of our fields"
-			(if (assoc (trade-to-card trade) (player-fields player))
+			(if (assoc (trade-from-card trade) (player-fields player))
 				"Accept the donation if a match"
 				(push (list player 1) (trade-info trade))
 				"Decline the donation if it doesnt match"
