@@ -20,6 +20,8 @@ minP(bean | deck) = P(draw bean| all cardsd taken out of deck were the bean)
 
 For valueing trades, we will need to make some slight modifications to this stratagy (such as seeing the value of the cards if we take trades, and for making trades we need to do some other stuff)
 
+change value to opponent-value that can approx the value of an opponents card to him without lookiing at their hand
+
 (plant-card (player card game))
 	for field in game->player->fields
 		if(field->beanType == card->beanType)
