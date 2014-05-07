@@ -192,51 +192,60 @@
           (setf least-valuable-field f)))
   least-valuable-field)
 
-; Value to force a useless bean to a very small heuristic value.
-; Avoids divide-by-zero errors if we hold enough beans to
-; eliminate the possibility of a higher coin tier.
-(defconstant *USELESS-BEAN* 1000000)
 
 (defun value (player card game)
-  "Calculates the value of a card using our heuristic"
-  (let*
-    ; Calculate the number of cards of this type that are not
-    ; in a field or held in a player's hand.
-    ((cards-in-play (+ (cdr (assoc card BeanTypes))
-                       (- (cdr (assoc card (game-coin-stats game))))
-                       (- (cdr (assoc card (game-discard-stats game))))
-                       (- 1)))
+  (let* (
+         ; Total size of the current max deck
+         (shuffle-deck-size (loop for i in (game-current-deck game) sum (cdr i)))
+         ; Maximum number of 'card in current deck
+         (max-of-type (assoc card (game-current-deck game)))
+         ; Minimum number of 'card in current deck
+         (min-of-type (- max-of-type drawn-since-shuffle))
+         ; Deck size right now
+         ; Set to 5 (number of cards we will draw) if the deck is empty
+         ; after our turn. Avoids divide-by-zero
+         (actual-deck-size (- shuffle-deck-size drawn-since-shuffle))
+         (actual-deck-size (if (<= actual-deck-size 0)
+                             5 ; Number of cards left in deck
+                             actual-deck-size))
 
-     ; If we have a field containing this card type, this stores the field.
-     ; Otherwise, nil (length of nil is 0).
-     (held-field (assoc card (player-fields player)))
-     ; Card to coin conversion for this bean.
-     (conversion (assoc card BeanConversion))
+         ; EDGE CASE - if there is one card in the deck at the beginning
+         ; of our turn, the deck will be shuffled in the middle in our hand.
+         ; Currently we don't handle this and assume that there are still
+         ; 5 cards in the deck. TODO maybe handle later.
 
-     ; Number of beans held (0 if held-field is nil, meaning no field has this type).
-     (beans-held (length held-field))
+         ; Number of beans held of this type
+         (beans-held (length (assoc card (player-fields player))))
+         ; Coin conversion
+         (conversion (assoc card BeanConversion))
+         ; Number of beans to earn the next coin
+         (beans-to-next-tier (cond
+                               ((and (second conversion) (< beans-held (second conversion)))
+                                (- (second conversion) beans-held))
+                               ((and (third conversion) (< beans-held (third conversion)))
+                                (- (third conversion) beans-held))
+                               ((and (fourth conversion) (< beans-held (fourth conversion)))
+                                (- (fourth conversion) beans-held))
+                               ((and (fifth conversion) (< beans-held (fifth conversion)))
+                                (- (fifth conversion) beans-held))
+                               (t 0)))
 
-     ; Number of beans needed to get to the next tier of coins. If there
-     ; is no higher tier of coins, *USELESS-BEAN* to avoid divide-by-zero
-     ; and make the bean useless relative to others (harvested early).
-     (beans-to-next-tier (cond
-                           ((and (second conversion) (< beans-held (second conversion)))
-                            (- (second conversion) beans-held))
-                           ((and (third conversion) (< beans-held (third conversion)))
-                            (- (third conversion) beans-held))
-                           ((and (fourth conversion) (< beans-held (fourth conversion)))
-                            (- (fourth conversion) beans-held))
-                           ((and (fifth conversion) (< beans-held (fifth conversion)))
-                            (- (fifth conversion) beans-held))
-                           (t *USELESS-BEAN*)))
+         ; Probability of getting the coin given that we draw
+         ; beans-to-next-tier of the current requested bean.
+         (prob-get-coin (reduce #'* (loop for i from 0 to (- beans-to-next-tier 1) collect
+                                          (let* (
+                                                 ; Maximum probability of drawing the bean
+                                                 (max-prob (/ (- max-of-type i) (- actual-deck-size i)))
+                                                 ; Minimum probability of drawing the bean
+                                                 (min-prob (/ (- min-of-type i) (- actual-deck-size i)))
+                                                 ; Average probability of drawing the bean
+                                                 (avg-prob (/ (+ max-prob min-prob) 2))
+                                                 )
+                                            avg-prob))))
+         )
+    prob-get-coin))
 
-     ; Number of coins earned if we harvest the field.
-     (coins-earned (if (not (equal held-field nil))
-                     (harvest-rate held-field)
-                     1)))
 
-    ; Heuristic calcuation.
-    (* (/ cards-in-play beans-to-next-tier) coins-earned)))
 
 (defun at-risk? (player card game)
   ; Check if card matches the type of any field. If not, return, no risk.
