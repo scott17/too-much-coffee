@@ -135,11 +135,16 @@
 
     ))
 
+	
+;; Generates trades based on the cards that match our fields
+;;  We will favor trades that match and trade away face-up cards
+;;   that match none of our fields
 (defun generate-trades (player &aux (trades nil) desired-cards)
 	)
 
-;; Generates trades based on a list of good cards,
-;;   a player
+;; Generates trades based on a list of good cards we want,
+;;   the player, a bad card we own, the value of such a trade
+;;   and the location of the bad card
 (defun make-new-trades (player loc bad goods value)
   (loop for card in goods
 	collect (make-instance 'trade :from-player player
