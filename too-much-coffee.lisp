@@ -25,10 +25,45 @@
            user::is-planted?))
 
 
+;; Global variables for tracking deck statistics.
+
+(defvar *drawn-since-shuffle* 0)
+(defvar *rounds-since-shuffle* 0)
+(defvar *shuffles* 0)
+
+
 ;; Required Functions
 
 (defun plant-card (player card game)
-  ; "Plants the required card."
+  "Plants the required card."
+
+  ; Before planting, update our own deck statistics.
+  ; (Used in #'value)
+  (if (not (equal *shuffles*
+                  (game-shuffles game)))
+    ; If our shuffle count and the real shuffle count are not equal,
+    ; the deck has been shuffled. We need to reset the number of rounds
+    ; since the last shuffle and the number of cards drawn.
+    (progn
+      (setf *shuffles* (game-shuffles game))
+      (setf *rounds-since-shuffle* 0)
+      ; TODO do we want to assume that no cards have been drawn when
+      ; we detect a new shuffle, or do we want to assume that a full
+      ; round has already completed? AT THE BEGINNING of the game, we
+      ; of course assume that no rounds have happened. Do we assume 1 here?
+      ; if so, *rounds-since-shuffle* 1
+      (setf *drawn-since-shuffle* 0))
+    ; Deck has not been shuffled. Increase the number of rounds that
+    ; has occurred.
+    (incf *rounds-since-shuffle*))
+  ; Increment the number of cards that has been drawn since
+  ; the last shuffle by five cards for every player that is
+  ; in the game. This is an estimate, not an exact value.
+  (setf *drawn-since-shuffle* (+ *drawn-since-shuffle*
+                                 (* *rounds-since-shuffle*
+                                    (length (game-players game))
+                                    5)))
+
   ; First attempt to plant the card into a field containing the same card type.
   (let ((same-field (assoc card (player-fields player))))
     (if (not (equal same-field nil))
@@ -200,11 +235,11 @@
          ; Maximum number of 'card in current deck
          (max-of-type (assoc card (game-current-deck game)))
          ; Minimum number of 'card in current deck
-         (min-of-type (- max-of-type drawn-since-shuffle))
+         (min-of-type (- max-of-type *drawn-since-shuffle*))
          ; Deck size right now
          ; Set to 5 (number of cards we will draw) if the deck is empty
          ; after our turn. Avoids divide-by-zero
-         (actual-deck-size (- shuffle-deck-size drawn-since-shuffle))
+         (actual-deck-size (- shuffle-deck-size *drawn-since-shuffle*))
          (actual-deck-size (if (<= actual-deck-size 0)
                              5 ; Number of cards left in deck
                              actual-deck-size))
