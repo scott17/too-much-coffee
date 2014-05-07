@@ -177,7 +177,35 @@
 ;;    to determine the approximate value of a card.
 
 (defun evaluate-trades (player trades)
+	"For each of the trades in trade"
+	(loop for trade in trades
+		"If the trade is not a donation"
+		do (if (trade-to-card trade)
+				"viable is a list of indices in our hand where we have to card"
+				(let ((viable (viable-trade player trade)))
+					"If the trade is viable and we have the to bean type in our field"
+					 (if (and viable ((assoc (trade-to-card trade) (player-fields player))))
+						"If the from card matches one of our fields"
+						 (if (assoc (trade-from-card trade) (player-fields player))
+							"If it does, accept the trade, but trade the last"
+							(push (list player 1 (last viable))
+								(trade-info trade))
+							"If it does not, accept the trade, but trade the first"
+							(push (list player 1 (car viable))
+								(trade-info trade)))
+						"If the to card matches none of our fields, do not trade."
+						 (push (list player 0) (trade-info trade))
+						)
+				)
+			"If the trade is a donation and the to card matches one of our fields"
+			(if (assoc (trade-to-card trade) (player-fields player))
+				"Accept the donation if a match"
+				(push (list player 1) (trade-info trade))
+				"Decline the donation if it doesnt match"
+				(push (list player 0) (trade-info trade)))
+		)
 	)
+)
 	
 
 ;; Utility Functions
