@@ -53,8 +53,8 @@
       ; of course assume that no rounds have happened. Do we assume 1 here?
       ; if so, *rounds-since-shuffle* 1
       (setf *drawn-since-shuffle* 0))
-    ; Deck has not been shuffled. Increase the number of rounds that
-    ; has occurred.
+    ; Else, deck has not been shuffled. Increase the number of rounds
+    ; that has occurred.
     (incf *rounds-since-shuffle*))
   ; Increment the number of cards that has been drawn since
   ; the last shuffle by five cards for every player that is
