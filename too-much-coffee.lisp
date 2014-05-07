@@ -135,6 +135,50 @@
 
     ))
 
+(defun generate-trades (player &aux (trades nil) desired-cards)
+	)
+	
+(defun make-new-trades (player loc bad goods value)
+  (loop for card in goods
+	collect (make-instance 'trade :from-player player
+				      :from-card bad
+				      :from-pos loc
+				      :from-score value
+				      :to-card card
+				      :info nil)))
+					  
+					  
+
+;; This function takes the player object and a list of
+;; proposed trades (objects of class "TRADE") and scores
+;; each of the trades, pushing a list
+;;    (PLAYER SCORE (CARD POSITION) (CARD POSITION) ...)
+;; on the front of the TRADE-INFO slot for each trade offered.
+;; 
+;; Score: 1 means a fully acceptable trade; 0 means a nonviable or
+;; unacceptable trade; scores in between are interpreted as
+;; strength of preference for the given trade.
+;;
+;; Where: always 'user::player-hand since the non-active player
+;; can't trade faceup cards
+;;
+;; Position:  0-indexed location in hand
+;;
+;; This function may call the API function
+;;    viable-trade (player trade)
+;; which returns either NIL or a list of positions in the
+;; player's hand where the requested card can be found
+;;
+;; (Note: viable-trades() will not work for requests to donate
+;; a card, so that case should be handled separately!!)
+;;
+;; Our version of this uses our new version of the value function.
+;;    The value function uses probabilities and the current game state
+;;    to determine the approximate value of a card.
+
+(defun evaluate-trades (player trades)
+	)
+	
 
 ;; Utility Functions
 
