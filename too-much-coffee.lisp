@@ -137,7 +137,9 @@
 
 (defun generate-trades (player &aux (trades nil) desired-cards)
 	)
-	
+
+;; Generates trades based on a list of good cards,
+;;   a player
 (defun make-new-trades (player loc bad goods value)
   (loop for card in goods
 	collect (make-instance 'trade :from-player player
