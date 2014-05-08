@@ -2,7 +2,7 @@
 ;; 
 ;; bohnanza-trading.lisp - main game engine for CMSC 471 project
 ;; (c) Marie desJardins 2014
-;; VERSION 6.1 - Distributed 4/23/14
+;; VERSION 6.3 - Distributed 4/23/14
 ;;   Changes from alpha: increments game-shuffles and game-rounds
 ;;   Changes from beta:  fixes deck counting error
 ;;   Changes from beta-prime: add error checking for plant-card-at-front & OPTIONALLY-PLANT-CARD functions
@@ -11,8 +11,13 @@
 ;;      resolution of trading ties
 ;;   Changes from 5.0: changed trading protocol to specify player
 ;;      in trades to be scored
-;;   Change from 6.1 - calls PLANT-CARD instead of OPTIONALLY-PLANT-CARD
+;;   Change from 6.0 - calls PLANT-CARD instead of OPTIONALLY-PLANT-CARD
 ;;      when to-player accepts a trade
+;;   Change from 6.1 - fixed bug that was planting TO-CARD in TO-PLAYER's
+;;      fields (instead of planting FROM-CARD)
+;;   Change from 6.2 - fixed deal-to-player to return T if successfully
+;;      dealt a card (was returning value of check-card-counts); fixed
+;;      bug in buy-third-bean-field (was not updating coin-stats)
 ;;   
 ;;
 ;; In the tournament, the game will be played with 3 players
@@ -29,6 +34,15 @@
 
 (setf *SUPPRESS-SIMILAR-CONSTANT-REDEFINITION-WARNING* t)
 
+
+(defvar *VERBOSITY* t)
+
+(defun myformat (level &rest args)
+  (case *VERBOSITY*
+	(nil)
+	(:stats (if (eq level :stats)
+		    (apply #'format (cons t args))))
+	 (t (apply #'format (cons t args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
@@ -246,44 +260,54 @@
 
     (setf *game* game)
 
-    (format t "Here's the initial deck: ~%~s~%" (game-deck game))
+    (myformat t "Here's the initial deck: ~%~s~%" (game-deck game))
 
-    (format t "Initial deal:  five cards per player~%")
+    (myformat t "Initial deal:  five cards per player~%")
     (loop for p in (game-players game)
 	  do (loop for i from 1 to 5 do (deal-to-player p game 'hand)))
     (print-round-summary game)
+
+    ;; Reality/bug check
+    (check-card-counts "Start of game")
 
     (loop named gameloop
 	  while (or (game-deck game) (<= (game-shuffles game) 3))
 	  do (progn
 	       (incf (game-rounds game))
+	       (check-card-counts "Start of round")
 	       (loop for p in (game-players game)
 		     do
 		     (progn
-		       (if (player-hand p)
-			   (progn  
-			     (wrap-plant-card-at-front p game)
-		       (if (player-hand p)
-			   (wrap-optionally-plant-card p game))
-		       (if (not (deal-to-player p game 'faceup))
-			   (return-from gameloop))
-		       (if (not (deal-to-player p game 'faceup))
-			   (return-from gameloop))
-		       (funcall (player-fn p "HANDLE-FACE-UP-CARDS") p game)
-		       (if (not (deal-to-player p game 'hand))
-			   (return-from gameloop))
-		       (if (not (deal-to-player p game 'hand))
-			   (return-from gameloop))
-		       (if (not (deal-to-player p game 'hand))
-			   (return-from gameloop))
-		       )))
-	  (print-round-summary game))))
+		       (when (player-hand p)
+			 (progn  
+			   (wrap-plant-card-at-front p game)
+			   (when (player-hand p)
+			     (wrap-optionally-plant-card p game)
+			     (check-card-counts "After optionally-plant-card"))
+			   (if (not (deal-to-player p game 'faceup))
+			       (return-from gameloop))
+			   (if (not (deal-to-player p game 'faceup))
+			       (return-from gameloop))
+			   (funcall (player-fn p "HANDLE-FACE-UP-CARDS") p game)
+			   (check-card-counts "After handle-face-up-cards")
+			   (if (not (deal-to-player p game 'hand))
+			       (return-from gameloop))
+			   (if (not (deal-to-player p game 'hand))
+			       (return-from gameloop))
+			   (if (not (deal-to-player p game 'hand))
+			       (return-from gameloop))
+		       ))))
+	       (print-round-summary game)))
+
+    (check-card-counts "After final round")
 
     ;; Harvest all remaining non-empty fields
     (loop for p in (game-players game)
 	  do (loop for n in '(0 1 2)
 		   do (if (nth n (player-fields p))
 			  (harvest p n game :final-harvest t))))
+
+    (check-card-counts "After final harvest")
 
     (print-game-summary game)))
 
@@ -335,18 +359,18 @@
 
 ;; Print game summary statistics and final game state
 (defun print-game-summary (game)
-  (format t "~%END OF GAME!~%~%")
-  (format t "Final deck: ~s~%" (game-deck game))
-  (format t "Deck stats: ~s~%" (game-deck-stats game))
-  (format t "Discard stats: ~s~%" (game-discard-stats game))
-  (format t "Coin stats: ~s~%" (game-coin-stats game))
+  (myformat t "~%END OF GAME!~%~%")
+  (myformat t "Final deck: ~s~%" (game-deck game))
+  (myformat t "Deck stats: ~s~%" (game-deck-stats game))
+  (myformat t "Discard stats: ~s~%" (game-discard-stats game))
+  (myformat t "Coin stats: ~s~%" (game-coin-stats game))
   (loop for p in (game-players game)
 	do (progn
-	     (format t "Player ~s has ~s coins~%" 
+	     (myformat t "Player ~s has ~s coins~%" 
 		     (player-name p) (player-coins p))
-	     (format t "  Player ~s's fields: ~s~%" 
+	     (myformat t "  Player ~s's fields: ~s~%" 
 		     (player-name p) (player-fields p))
-	     (format t "  Player ~s's hand: ~s~%"
+	     (myformat t "  Player ~s's hand: ~s~%"
 		     (player-name p) (player-hand p))))
   )
 
@@ -368,8 +392,8 @@
 	((not (game-deck game))
 	 (setf (game-deck game) (randomize (game-discards game)))
 	 (incf (game-shuffles game))
-	 (format t "~%SHUFFLING THE DECK! (#~s)~%" (game-shuffles game))
-	 (format t "New deck: ~s~%~%" (game-deck game))
+	 (myformat t "~%SHUFFLING THE DECK! (#~s)~%" (game-shuffles game))
+	 (myformat t "New deck: ~s~%~%" (game-deck game))
 	 (setf (game-deck-stats game) (copy-tree (game-discard-stats game)))
 	 (setf (game-current-deck game) (copy-tree (game-discard-stats game)))
 	 (setf (game-viewed-stats game) (empty-bean-stats))
@@ -381,12 +405,13 @@
   ;; and so we simply end the game -- this would be very surprising,
   ;; so we also print a surprised message.
   (when (not (game-deck game)) 
-    (format t "This is surprising: the discard pile was empty when I tried to shuffle it!~%")
+    (myformat :stats "This is surprising: the discard pile was empty when I tried to shuffle it!~%")
     (return nil))
 
   ;; If we get here, there are cards, so we deal one.
+  (check-card-counts "Before dealing")
   (let ((card (pop (game-deck game))))
-    (format t "Dealing card ~s to player ~s's ~s~%" 
+    (myformat t "Dealing card ~s to player ~s's ~s~%" 
 	    card (player-name player) where)
     (cond ((eq where 'hand)
 	   (setf (player-hand player) 
@@ -398,6 +423,8 @@
 		    where)))
     ;; Update statistics of deck
     (decf (cdr (assoc card (game-deck-stats game)))))
+  (check-card-counts "After dealing")
+  t
   )
 
 
@@ -410,13 +437,15 @@
 
 ;; Print a summary of the game at the end of a round
 (defun print-round-summary (game)
-  (format t "~%~%END OF ROUND ~s~%" (game-rounds game))
+  (myformat t "~%~%END OF ROUND ~s~%" (game-rounds game))
+  (myformat t "Deck: ~s~%" (game-deck game))
+  (myformat t "Discards: ~s~%" (game-discards game))
   (loop for p in (game-players game)
 	do (progn
-	     (format t "Player ~s: coins ~s, hand ~s, fields ~s~%~%"
+	     (myformat t "Player ~s: coins ~s, hand ~s, fields ~s~%~%"
 		     (player-name p) (player-coins p) (player-hand p)
 		     (player-fields p))))
-  (format t "~%"))
+  (myformat t "~%"))
 
 
 
@@ -471,7 +500,7 @@
 
 ;; Actually perform a trade -- should have all fields set
 (defun execute-trade (trade)
-  (format t "Executing trade: ~s from ~s to ~s for ~s~%"
+  (myformat t "Executing trade: ~s from ~s to ~s for ~s~%"
 	  (trade-from-card trade) 
 	  (player-name (trade-from-player trade))
 	  (player-name (trade-to-player trade))
@@ -489,7 +518,7 @@
 	    (remove-nth (trade-from-pos trade) 
 			(player-hand (trade-from-player trade)))))
     (funcall (player-fn (trade-to-player trade) "PLANT-CARD") 
-	     (trade-to-player trade) (trade-to-card trade) *game*))
+	     (trade-to-player trade) (trade-from-card trade) *game*))
 
   ;; Remove the "to-card" from the to-player's hand and add it
   ;; to the from-player's faceup cards (unless it's a donation)
@@ -512,7 +541,7 @@
 ;; Plant a card in a numbered field
 ;; If the player tries to illegally plant (in a 3rd field if they
 ;; only have 2 fields, or in a field that contains some other bean
-;; type), they AUTOMATICALY FORFEIT THE GAME and are eliminated
+;; type), they AUTOMATICALLY FORFEIT THE GAME and are eliminated
 ;; from the tournament.
 (defun plant (card player n)
   (cond ((>= n (player-numfields player))
@@ -523,7 +552,7 @@
 		(player-name player) card n 
 		(car (nth n (player-fields player)))))
 	(t
-	 (format t "Planting ~s in ~s's ~s field~%"
+	 (myformat t "Planting ~s in ~s's ~s field~%"
 		 card (player-name player) n)
 	 (incf (cdr (assoc card (game-viewed-stats *game*))))
 	 (push card (nth n (player-fields player))))
@@ -541,29 +570,36 @@
       (if (not (member which (legal-fields-to-harvest (player-fields player))))
 	  (error "Player ~s tried to harvest illegal field ~s: FORFEIT!~%"
 		 (player-name player) which)))
-  (let ((new-coins (harvest-rate (nth which (player-fields player))))
+  (let ((field-count (length (nth which (player-fields player))))
+	(new-coins (harvest-rate (nth which (player-fields player))))
 	(bean-type (car (nth which (player-fields player)))))
-    (format t "Harvest ~s from player ~s field ~s: earns ~s coins~%"
+    (myformat t "Harvest ~s from player ~s field ~s: earns ~s coins~%"
 	    bean-type (player-name player) which new-coins)
     (incf (player-coins player) new-coins)
+    (if (not (eq (length (nth which (player-fields player)))
+		 field-count))
+	(error "Miscount in harvest before coin count!~%"))
     ;; Move the earned coins (beans) to the player's coins stack
     ;; and update the game summary statistics for coins
     (loop for i from 1 to new-coins
 	  do (progn
 	       (push (pop (nth which (player-fields player))) 
 		     (player-coin-stack player))
-	       (incf (cdr (assoc (car (player-coin-stack player))
+	       (incf (cdr (assoc bean-type
 				 (game-coin-stats game))))))
+    (if (not (eq (length (nth which (player-fields player)))
+		 (- field-count new-coins)))
+	(error "Miscount in harvest after coin count!~%"))
     ;; Move the remaining beans to the discard pile and update the
     ;; discard statistics
     (loop while (nth which (player-fields player))
 	  do (progn
 	       (push (pop (nth which (player-fields player))) 
 		     (game-discards game))
-	       (incf (cdr (assoc (car (game-discards game))
-				 (game-discard-stats game))))))
-    ))
-
+	       (incf (cdr (assoc bean-type
+				 (game-discard-stats game)))))))
+  
+  )
 
 ;; Check to see whether a bean can be planted in a field legally
 ;; (field is empty or already contains this bean type)
@@ -585,7 +621,7 @@
   harvest)
 
 
-;; Plant the card at the front of the deck.
+;; Plant the card at the front of the player's hand
 (defun plant-card-at-front (player game)
   (funcall (player-fn player "PLANT-CARD") player
 	   (pop (player-hand player)) game))
@@ -620,18 +656,24 @@
 ;; have one, or when they don't have three coins, nothing happens.
 (defun buy-third-bean-field (player game)
   (when (and (>= (player-coins player) 3) (< (player-numfields player) 3))
-    (format t "Player ~s is buying a third bean field~%" (player-name player))
+    (myformat t "Player ~s is buying a third bean field~%" (player-name player))
     (decf (player-coins player) 3)
     (incf (player-numfields player))
     (push (pop (player-coin-stack player)) (game-discards game))
     (incf (cdr (assoc (car (game-discards game))
 		      (game-discard-stats game))))
+    (decf (cdr (assoc (car (game-discards game))
+		      (game-coin-stats game))))
     (push (pop (player-coin-stack player)) (game-discards game))
     (incf (cdr (assoc (car (game-discards game))
 		      (game-discard-stats game))))
+    (decf (cdr (assoc (car (game-discards game))
+		      (game-coin-stats game))))
     (push (pop (player-coin-stack player)) (game-discards game))
     (incf (cdr (assoc (car (game-discards game))
 		      (game-discard-stats game))))
+    (decf (cdr (assoc (car (game-discards game))
+		      (game-coin-stats game))))
     ))
 
 
@@ -650,6 +692,7 @@
 
 (defun trade (trades player &aux (max-score 0) best-trade best-player
 		     trade-score best-player-trade trade-pos best-trade-pos)
+  (check-card-counts "Before trading")
   (loop for p in (game-players *game*)
 	;; Ask each non-active player to evaluate the proposed trades
 	do (if (not (eq p player))
@@ -670,6 +713,7 @@
     ;; doesn't set to-score... probably not needed so OK
     (setf (trade-to-pos best-trade) best-trade-pos)
     (execute-trade best-trade))
+  (check-card-counts "After trading")
   )
 
 
@@ -737,4 +781,49 @@
 		   collect (if (eq (nth i (player-hand player)) 
 				   (trade-to-card trade))
 			       i nil))))
+
+(defun check-card-counts (where)
+  (loop for bean in beanTypes
+	do (let ((count (+ (apply #'+ 
+				  (mapcar #'(lambda (p) 
+					      (count (car bean)
+						     (player-hand p)))
+					  (game-players *game*)))
+			   (apply #'+ 
+				  (mapcar #'(lambda (p)
+					      (count (car bean)
+						     (apply #'append
+							    (player-fields p))))
+					  (game-players *game*)))
+			   (apply #'+
+				  (mapcar #'(lambda (p)
+					      (count (car bean)
+						     (player-faceup p)))
+					  (game-players *game*)))
+			   (cdr (assoc (car bean) (game-deck-stats *game*)))
+			   (cdr (assoc (car bean) (game-discard-stats *game*)))
+			   (cdr (assoc (car bean) (game-coin-stats *game*))))))
+	     (if (not (eq (cdr bean) count))
+		 (error "~s: Miscount for bean ~s (count is ~s)!" 
+			where bean count)))))
+
+(defun print-all-card-sources ()
+  (myformat :stats "Deck: ~s~%" (game-deck *game*))
+  (myformat :stats "Deck stats: ~s~%~%" (game-deck-stats *game*))
+  (myformat :stats "Discards: ~s~%" (game-discards *game*))
+  (myformat :stats "Discard stats: ~s~%~%" (game-discard-stats *game*))
+  (myformat :stats "Coin stats: ~s~%~%" (game-coin-stats *game*))
+  (myformat :stats "Faceups:~%")
+  (mapcar #'(lambda (p) (myformat :stats "  Player ~s: ~s~%" (player-name p)
+				(player-faceup p)))
+	  (game-players *game*))
+  (myformat :stats "Hands:~%")
+  (mapcar #'(lambda (p) (myformat :stats "  Player ~s: ~s~%" (player-name p)
+				(player-hand p)))
+	  (game-players *game*))
+  (myformat :stats "Fields:~%")
+  (mapcar #'(lambda (p) (myformat :stats "  Player ~s: ~s~%" (player-name p)
+				(player-fields p)))
+	  (game-players *game*))
+  )
 
