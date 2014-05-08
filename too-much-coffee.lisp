@@ -14,7 +14,7 @@
 		  user::BeanConversion
 		  user::game-deck-stats user::game-discards user::game-discard-stats 
 		  user::game-coin-stats user::game-players user::game-rounds 
-		  user::game-shuffles
+		  user::game-shuffles user::game-current-deck
 		  user::player-name user::player-hand user::player-faceup
 		  user::player-numfields user::player-fields user::player-coins
 		  user::player-coin-stack
@@ -280,9 +280,9 @@
 (defun value (player card game)
   (let* (
          ; Total size of the current max deck
-         (shuffle-deck-size (loop for i in (user::game-current-deck game) sum (cdr i)))
+         (shuffle-deck-size (loop for i in (game-current-deck game) sum (cdr i)))
          ; Maximum number of 'card in current deck
-         (max-of-type (cdr (assoc card (user::game-current-deck game))))
+         (max-of-type (cdr (assoc card (game-current-deck game))))
          ; Minimum number of 'card in current deck
          (min-of-type (- max-of-type *drawn-since-shuffle*))
          ; Deck size right now
