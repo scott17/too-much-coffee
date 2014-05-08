@@ -228,6 +228,17 @@
   least-valuable-field)
 
 
+;; Determines the value of a card (a bean type). Our new version
+;; of the value function calculates the probability that we will
+;; be able to use the card in question to acquire a coin. We
+;; use an estimate of the cards remaining in the deck based on
+;; which cards were there as of the last shuffle. We estimate
+;; (in plant-card) the number of cards drawn out, and determine
+;; a maximum probability (no cards drawn were of 'card type) and
+;; a minimum (all cards drawn were 'card). The average value
+;; is the probability a card will be drawn. The probabilty we
+;; will earn the coin is the probability of drawing the number
+;; of 'card needed to earn the coin.
 (defun value (player card game)
   (let* (
          ; Total size of the current max deck
