@@ -233,7 +233,7 @@
 						;;If the from card matches one of our fields
 						 (if (assoc (trade-to-card trade) (player-fields player))
 							;;If it does, accept the trade, but trade the last
-							(push (list player 1 (last viable))
+							(push (list player 1 (car (last viable)))
 								(trade-info trade))
 							;;If it does not, accept the trade, but trade the first
 							(push (list player 1 (car viable))
