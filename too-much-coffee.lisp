@@ -280,9 +280,9 @@
 (defun value (player card game)
   (let* (
          ; Total size of the current max deck
-         (shuffle-deck-size (loop for i in (game-current-deck game) sum (cdr i)))
+         (shuffle-deck-size (loop for i in (user::game-current-deck game) sum (cdr i)))
          ; Maximum number of 'card in current deck
-         (max-of-type (assoc card (game-current-deck game)))
+         (max-of-type (assoc card (user::game-current-deck game)))
          ; Minimum number of 'card in current deck
          (min-of-type (- max-of-type *drawn-since-shuffle*))
          ; Deck size right now
