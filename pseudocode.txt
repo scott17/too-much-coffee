@@ -7,7 +7,7 @@ To Do for final submission:
 -implement code for trades (CAN RECIEVE, CANNOT OFFER)
 -change how the value function works (DONE)
 -verfy (at-risk) works the way we want it to
--make sure we are buying a thrid field
+-make sure we are buying a thrid field (DONE)
 
 Planned changes:
 -Change value to use more direct probability:
