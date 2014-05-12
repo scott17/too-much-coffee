@@ -192,10 +192,20 @@
 ;; returns a list of numbers refering to the index in the hand
 (defun trade-from-front (player &aux (trades nil) desired-cards)
   ; generates a list of bad cards to get rid of
-  (loop for i from 0 to (length (player-hand player)) collect
-    (loop for card in desired-cards until (equal (assoc '((nth i (player-hand player))) (player-fields player)) nil)
+  (loop for i from 0 to (length (player-hand player)) append
+    ; this should go until it finds a card that we have in a filed
+    (loop for card in desired-cards until 
+      (equal (assoc '((nth i (player-hand player))) (player-fields player)) nil)
+      collect
         i)))
 
+;; looks at the cards in our hand from the start index back and returns a list of the indicies
+;; The start-index value comes from the last index given by trade-from front + 2, or is one if trade-from-front returns nil
+; (that index + 1 is a card we have in our fields and we want to keep for our next madatory plant)
+(defun trade-from-back (player &aux (trades nil) desired-cards start-index)
+    (loop for i from start-index to (len (player-hand player)) collect
+      i)
+  )
 
 ;; Generates trades based on a list of good cards we want,
 ;;   the player, a bad card we own, the value of such a trade
