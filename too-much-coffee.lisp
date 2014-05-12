@@ -178,8 +178,24 @@
 ;; Generates trades based on the cards that match our fields
 ;;  We will favor trades that match and trade away face-up cards
 ;;   that match none of our fields
+;;  make a list of card we want to get rid of 
+;;    -face up cards if they do not match our fields
+;;    -the cards at the front of our hand if they do not match any of our fields
+;;  Offer trades of these for the type of cards in our fields
+;;  so the trade system works like this: WE call the trades function from her code, and that calls the evaluate trades functions
+; in other poeple's stuff
+; what this needs to do is generate a list of the positions of the cards in the hand
 (defun generate-trades (player &aux (trades nil) desired-cards)
-	)
+)
+
+;; Looks from the front of our hand to try and trade off cards that are not in fields
+;; returns a list of numbers refering to the index in the hand
+(defun trade-from-front (player &aux (trades nil) desired-cards)
+  ; generates a list of bad cards to get rid of
+  (loop for i from 0 to (length (player-hand player)) collect
+    (loop for card in desired-cards until (equal (assoc '((nth i (player-hand player))) (player-fields player)) nil)
+        i)))
+
 
 ;; Generates trades based on a list of good cards we want,
 ;;   the player, a bad card we own, the value of such a trade

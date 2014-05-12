@@ -1,12 +1,13 @@
 To Do for dry run:
--update (value) to use the new functions
--make skeleton of the new functions we need to add for trading. (dry run due next thurs)
+-update (value) to use the new functions (DONE)
+-make skeleton of the new functions we need to add for trading. (dry run due next thurs) (DONE)
 
 To Do for final submission:
 -comment code more thououghly
--implement code for trades
--change how the value function works
+-implement code for trades (CAN RECIEVE, CANNOT OFFER)
+-change how the value function works (DONE)
 -verfy (at-risk) works the way we want it to
+-make sure we are buying a thrid field
 
 Planned changes:
 -Change value to use more direct probability:
