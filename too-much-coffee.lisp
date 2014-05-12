@@ -91,12 +91,12 @@
     (harvest player harvest-choice game)
     (plant card player harvest-choice)))
 
-(defun get-first-card (player)
-  (car (player-hand player)))
+; (defun get-first-card (player)
+;   )
 
 (defun optionally-plant-card (player game)
   ;checks for at risk
-  (if (at-risk? player (get-first-card player) game)
+  (if (at-risk? player (car (player-hand player)) game)
     ;if we are at risk, return from the function
     (return-from optionally-plant-card)
     ;if not, perform a series of loops
@@ -129,25 +129,51 @@
   ;(plant-card player (pop (player-faceup player)) game)
   ;(plant-card player (pop (player-faceup player)) game)
 
-
   (progn 
-    ; First get the two cards 
+
+    (setq first-card (car (player-faceup player))
+          second-card (last (player-faceup player)))
+
+     ; Plan to plant the cards in matching fields if they exist
+    (let ((same-field (assoc first-card (player-fields player))))
+      (if (not (equal same-field nil))
+        (progn
+          (setq first-card nil))))
+
+    ; plan to plant the cards in matching fields if they exist
+    (let ((same-field (assoc second-card (player-fields player))))
+      (if (not (equal same-field nil))
+        (progn
+          (setq second-card nil))))
+
+    (trade 
+      (generate-trades player (remove nil (player-fields player)) (remove nil '(first-card second-card)))
+      (game-players game))
+
+    (print "there")
+
+    ; Actually ge the first get the two cards, should come out as nil if card have been traded 
     (setq first-card (pop (player-faceup player))
           second-card (pop (player-faceup player)))
+
     ; Plant the cards in matching fields if they exist
     (let ((same-field (assoc first-card (player-fields player))))
       (if (not (equal same-field nil))
         (progn
           (plant-card player first-card game)
           (setq first-card nil))))
+
+    ; Plant the cards in matching fields if they exist
     (let ((same-field (assoc second-card (player-fields player))))
       (if (not (equal same-field nil))
         (progn
           (plant-card player second-card game)
           (setq second-card nil))))
+    
     ; If we planted both of the cards we are done
     (if (and (equal first-card nil) (equal second-card nil))
       (return-from handle-face-up-cards))
+
     ; If both aren't planted yet
     (if (and (not (equal first-card nil)) (not (equal second-card nil)))
       ; If the first is more valuable than the second,
@@ -165,6 +191,7 @@
           (plant-card player first-card game)
           (plant-card player second-card game)
           (return-from handle-face-up-cards))))
+
     ; Finally, if the first isn't planted yet,
     ;  plant it.
     (if (not (equal first-card nil))
@@ -185,27 +212,53 @@
 ;;  so the trade system works like this: WE call the trades function from her code, and that calls the evaluate trades functions
 ; in other poeple's stuff
 ; what this needs to do is generate a list of the positions of the cards in the hand
-(defun generate-trades (player &aux (trades nil) desired-cards)
-)
+; (defun generate-trades (players &aux (trades nil) desired-cards)
+(defun generate-trades (player desired-cards face-ups)
+  (progn
+  (if (equal nil desired-cards)
+    ; if all fields are empty, trat face-ups as planted
+    (generate-trades player face-ups nil)
+
+    ; if there are cards planted, proceed as normal
+
+    (let (
+      (trades '())
+      (front-trades (remove nil (trades-from-front player desired-cards))))
+    (progn
+
+      (setq trades (append trades (loop for face-up in face-ups append
+                        (make-new-trades player 'player-faceup face-up desired-cards 1))))
+
+      (setq trades (append trades (loop for i in front-trades append
+                        (make-new-trades player i (nth i (player-hand player)) desired-cards 0.7))))
+
+      (setq trades
+      (if (>= 0 (length front-trades))
+        (append trades (loop for i in (trades-from-back player 1) append
+          (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5)))
+
+        (append trades (loop for i in (trades-from-back player (+ 2 (car (last front-trades)))) append
+          (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5))))
+        ))))
+    ))
 
 ;; Looks from the front of our hand to try and trade off cards that are not in fields
 ;; returns a list of numbers refering to the index in the hand
-(defun trade-from-front (player &aux (trades nil) desired-cards)
+(defun trades-from-front (player desired-cards)
   ; generates a list of bad cards to get rid of
   (loop for i from 0 to (length (player-hand player)) append
     ; this should go until it finds a card that we have in a filed
     (loop for card in desired-cards until 
-      (equal (assoc '((nth i (player-hand player))) (player-fields player)) nil)
+      (equal (assoc (nth i (player-hand player)) (player-fields player)) nil)
       collect
         i)))
 
 ;; looks at the cards in our hand from the start index back and returns a list of the indicies
 ;; The start-index value comes from the last index given by trade-from front + 2, or is one if trade-from-front returns nil
 ; (that index + 1 is a card we have in our fields and we want to keep for our next madatory plant)
-(defun trade-from-back (player &aux (trades nil) desired-cards start-index)
-    (loop for i from start-index to (len (player-hand player)) collect
-      i)
-  )
+(defun trades-from-back (player start-index)
+    (loop for i from start-index to (length (player-hand player)) collect
+      i))
 
 ;; Generates trades based on a list of good cards we want,
 ;;   the player, a bad card we own, the value of such a trade
