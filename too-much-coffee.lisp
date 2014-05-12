@@ -41,6 +41,13 @@
 (defun plant-card (player card game)
   "Plants the required card."
 
+  ; If we have enough coins, we havent already bought
+  ;   a third field and it is before the first shuffle
+  ;   , buy a third field
+  (if (and (and (> (player-coins player) 3) (< (player-numfields player) 3))
+			(< (game-shuffles game) 1))
+      (buy-third-bean-field player game))
+  
   ; Before planting, update our own deck statistics.
   ; (Used in #'value)
   (if (not (equal *shuffles*
