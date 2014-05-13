@@ -37,7 +37,8 @@
 
 
 ;; Required Functions
-
+;; Looks at the current state of the fields and tries to find the optimal field to harvest
+;; Used for the manually planted card at the beginning of the turn
 (defun plant-card (player card game)
   "Plants the required card."
 
@@ -98,9 +99,7 @@
     (harvest player harvest-choice game)
     (plant card player harvest-choice)))
 
-; (defun get-first-card (player)
-;   )
-
+;; Decides wether to plant he second card in ur hand at the start of the turn
 (defun optionally-plant-card (player game)
   ;checks for at risk
   (if (at-risk? player (car (player-hand player)) game)
@@ -128,14 +127,9 @@
                   )))))
 
 
-
+;; Called in order to process the two face up cards taht are revealed in the turn 
+;; Also handles trades
 (defun handle-face-up-cards (player game)
-  ;These first two are guarenteed to work
-  ;They are stupid
-  ;This will be changed later before the final submit
-  ;(plant-card player (pop (player-faceup player)) game)
-  ;(plant-card player (pop (player-faceup player)) game)
-
   (progn 
 
     (setq first-card (car (player-faceup player))
@@ -216,8 +210,6 @@
 ;;  Offer trades of these for the type of cards in our fields
 ;;  so the trade system works like this: WE call the trades function from her code, and that calls the evaluate trades functions
 ; in other poeple's stuff
-; what this needs to do is generate a list of the positions of the cards in the hand
-; (defun generate-trades (players &aux (trades nil) desired-cards)
 (defun generate-trades (player desired-cards face-ups)
   (progn
   (if (equal nil desired-cards)
@@ -338,7 +330,7 @@
 	
 
 ;; Utility Functions
-
+;; chooses a field to harvest
 (defun choose-harvest (player game &aux least-valuable-field)
   "Determines the least valuable field that is legal to harvest."
   (loop for f in (legal-fields-to-harvest (player-fields player)) do
@@ -414,7 +406,8 @@
     prob-get-coin))
 
 
-
+;; Looks at the current state of the field and predicts wether planting a card puts it "at risk" 
+;; of being harvested without a profit in a turn
 (defun at-risk? (player card game)
   ; Check if card matches the type of any field. If not, return, no risk.
   (if (not (assoc card (player-fields player)))
