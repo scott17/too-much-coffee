@@ -133,7 +133,7 @@
   (progn 
 
     (setq first-card (car (player-faceup player))
-          second-card (last (player-faceup player)))
+          second-card (car (last (player-faceup player))))
 
      ; Plan to plant the cards in matching fields if they exist
     (let ((same-field (assoc first-card (player-fields player))))
@@ -148,7 +148,7 @@
           (setq second-card nil))))
 
     (trade 
-      (generate-trades player (remove nil (player-fields player)) (remove nil (list first-card second-card)))
+      (generate-trades player (loop for field in (remove nil (player-fields player)) collect (car field)) (remove nil (list first-card second-card)) game)
       (game-players game))
 
     ; Actually ge the first get the two cards, should come out as nil if card have been traded 
@@ -210,11 +210,11 @@
 ;;  Offer trades of these for the type of cards in our fields
 ;;  so the trade system works like this: WE call the trades function from her code, and that calls the evaluate trades functions
 ; in other poeple's stuff
-(defun generate-trades (player desired-cards face-ups)
+(defun generate-trades (player desired-cards face-ups game)
   (progn
   (if (equal nil desired-cards)
     ; if all fields are empty, trat face-ups as planted
-    (generate-trades player face-ups nil)
+    (generate-trades player face-ups nil game)
 
     ; if there are cards planted, proceed as normal
 
@@ -222,7 +222,11 @@
       (trades '())
       (front-trades (remove nil (trades-from-front player desired-cards))))
     (progn
-
+;;;;;;;;;;; LOOP HERE
+(loop for other-player in (game-players game) do
+      (if (not (equal (player-name other-player)
+                      (player-name player)))
+        (progn
       (setq trades (append trades (loop for face-up in face-ups append
                         (make-new-trades player 'player-faceup face-up desired-cards 1))))
 
@@ -236,8 +240,9 @@
 
         (append trades (loop for i in (trades-from-back player (+   2 (car (last front-trades)))) append
           (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5))))
-        ))))
-    ))
+        ))
+      nil)))
+    ))))
 
 ;; Looks from the front of our hand to try and trade off cards that are not in fields
 ;; returns a list of numbers refering to the index in the hand
