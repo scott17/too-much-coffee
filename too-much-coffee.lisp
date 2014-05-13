@@ -148,7 +148,7 @@
           (setq second-card nil))))
 
     (trade 
-      (generate-trades player (remove nil (player-fields player)) (remove nil '(first-card second-card)))
+      (generate-trades player (remove nil (player-fields player)) (remove nil (list first-card second-card)))
       (game-players game))
 
     ; Actually ge the first get the two cards, should come out as nil if card have been traded 
