@@ -157,8 +157,6 @@
       (generate-trades player (remove nil (player-fields player)) (remove nil '(first-card second-card)))
       (game-players game))
 
-    (print "there")
-
     ; Actually ge the first get the two cards, should come out as nil if card have been traded 
     (setq first-card (pop (player-faceup player))
           second-card (pop (player-faceup player)))
@@ -244,7 +242,7 @@
         (append trades (loop for i in (trades-from-back player 1) append
           (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5)))
 
-        (append trades (loop for i in (trades-from-back player (+ 2 (car (last front-trades)))) append
+        (append trades (loop for i in (trades-from-back player (+   2 (car (last front-trades)))) append
           (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5))))
         ))))
     ))
