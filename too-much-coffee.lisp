@@ -11,22 +11,22 @@
 ;; Imports
 
 (import '(user::BeanTypes 
-		  user::BeanConversion
-		  user::game-deck-stats user::game-discards user::game-discard-stats 
-		  user::game-coin-stats user::game-players user::game-rounds 
-		  user::game-shuffles user::game-current-deck
-		  user::player-name user::player-hand user::player-faceup
-		  user::player-numfields user::player-fields user::player-coins
-		  user::player-coin-stack
-		  user::trade-from-player user::trade-from-card user::trade-from-pos
-		  user::trade-from-score
-		  user::trade-to-player user::trade-to-card user::trade-to-pos
-		  user::trade-to-score user::trade-info
-		  user::plant user::harvest user::bean-fits
-		  user::legal-fields-to-harvest user::plant-card-at-front
-		  user::harvest-rate user::buy-third-bean-field
-		  user::is-singleton? user::is-multiple? user::is-empty?
-		  user::is-planted? user::trade user::viable-trade))
+           user::BeanConversion
+           user::game-deck-stats user::game-discards user::game-discard-stats 
+           user::game-coin-stats user::game-players user::game-rounds 
+           user::game-shuffles user::game-current-deck
+           user::player-name user::player-hand user::player-faceup
+           user::player-numfields user::player-fields user::player-coins
+           user::player-coin-stack
+           user::trade-from-player user::trade-from-card user::trade-from-pos
+           user::trade-from-score
+           user::trade-to-player user::trade-to-card user::trade-to-pos
+           user::trade-to-score user::trade-info
+           user::plant user::harvest user::bean-fits
+           user::legal-fields-to-harvest user::plant-card-at-front
+           user::harvest-rate user::buy-third-bean-field
+           user::is-singleton? user::is-multiple? user::is-empty?
+           user::is-planted? user::trade user::viable-trade))
 
 
 ;; Global variables for tracking deck statistics.
@@ -46,9 +46,9 @@
   ;   a third field and it is before the first shuffle
   ;   , buy a third field
   (if (and (and (> (player-coins player) 3) (< (player-numfields player) 3))
-			(< (game-shuffles game) 1))
-      (buy-third-bean-field player game))
-  
+           (< (game-shuffles game) 1))
+    (buy-third-bean-field player game))
+
   ; Before planting, update our own deck statistics.
   ; (Used in #'value)
   (if (not (equal *shuffles*
@@ -135,7 +135,7 @@
     (setq first-card (car (player-faceup player))
           second-card (car (last (player-faceup player))))
 
-     ; Plan to plant the cards in matching fields if they exist
+    ; Plan to plant the cards in matching fields if they exist
     (let ((same-field (assoc first-card (player-fields player))))
       (if (not (equal same-field nil))
         (progn
@@ -168,7 +168,7 @@
         (progn
           (plant-card player second-card game)
           (setq second-card nil))))
-    
+
     ; If we planted both of the cards we are done
     (if (and (equal first-card nil) (equal second-card nil))
       (return-from handle-face-up-cards))
@@ -200,7 +200,7 @@
 
     ))
 
-	
+
 ;; Generates trades based on the cards that match our fields
 ;;  We will favor trades that match and trade away face-up cards
 ;;   that match none of our fields
@@ -212,69 +212,69 @@
 ; in other poeple's stuff
 (defun generate-trades (player desired-cards face-ups game)
   (progn
-  (if (equal nil desired-cards)
-    ; if all fields are empty, trat face-ups as planted
-    (generate-trades player face-ups nil game)
+    (if (equal nil desired-cards)
+      ; if all fields are empty, trat face-ups as planted
+      (generate-trades player face-ups nil game)
 
-    ; if there are cards planted, proceed as normal
+      ; if there are cards planted, proceed as normal
 
-    (let (
-      (trades '())
-      (front-trades (remove nil (trades-from-front player desired-cards))))
-    (progn
-;;;;;;;;;;; LOOP HERE
-(loop for other-player in (game-players game) do
-      (if (not (equal (player-name other-player)
-                      (player-name player)))
+      (let (
+            (trades '())
+            (front-trades (remove nil (trades-from-front player desired-cards))))
         (progn
-      (setq trades (append trades (loop for face-up in face-ups append
-                        (make-new-trades player 'player-faceup face-up desired-cards 1))))
+          ;;;;;;;;;;; LOOP HERE
+          (loop for other-player in (game-players game) do
+                (if (not (equal (player-name other-player)
+                                (player-name player)))
+                  (progn
+                    (setq trades (append trades (loop for face-up in face-ups append
+                                                      (make-new-trades player 'player-faceup face-up desired-cards 1))))
 
-      (setq trades (append trades (loop for i in front-trades append
-                        (make-new-trades player i (nth i (player-hand player)) desired-cards 0.7))))
+                    (setq trades (append trades (loop for i in front-trades append
+                                                      (make-new-trades player i (nth i (player-hand player)) desired-cards 0.7))))
 
-      (setq trades
-      (if (>= 0 (length front-trades))
-        (append trades (loop for i in (trades-from-back player 1) append
-          (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5)))
+                    (setq trades
+                          (if (>= 0 (length front-trades))
+                            (append trades (loop for i in (trades-from-back player 1) append
+                                                 (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5)))
 
-        (append trades (loop for i in (trades-from-back player (+   2 (car (last front-trades)))) append
-          (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5))))
-        ))
-      nil)))
-    ))))
+                            (append trades (loop for i in (trades-from-back player (+   2 (car (last front-trades)))) append
+                                                 (make-new-trades player i (nth i (player-hand player)) desired-cards 0.5))))
+                          ))
+                  nil)))
+        ))))
 
 ;; Looks from the front of our hand to try and trade off cards that are not in fields
 ;; returns a list of numbers refering to the index in the hand
 (defun trades-from-front (player desired-cards)
   ; generates a list of bad cards to get rid of
   (loop for i from 0 to (length (player-hand player)) append
-    ; this should go until it finds a card that we have in a filed
-    (loop for card in desired-cards until 
-      (equal (assoc (nth i (player-hand player)) (player-fields player)) nil)
-      collect
-        i)))
+        ; this should go until it finds a card that we have in a filed
+        (loop for card in desired-cards until 
+              (equal (assoc (nth i (player-hand player)) (player-fields player)) nil)
+              collect
+              i)))
 
 ;; looks at the cards in our hand from the start index back and returns a list of the indicies
 ;; The start-index value comes from the last index given by trade-from front + 2, or is one if trade-from-front returns nil
 ; (that index + 1 is a card we have in our fields and we want to keep for our next madatory plant)
 (defun trades-from-back (player start-index)
-    (loop for i from start-index to (length (player-hand player)) collect
-      i))
+  (loop for i from start-index to (length (player-hand player)) collect
+        i))
 
 ;; Generates trades based on a list of good cards we want,
 ;;   the player, a bad card we own, the value of such a trade
 ;;   and the location of the bad card
 (defun make-new-trades (player loc bad goods value)
   (loop for card in goods
-	collect (make-instance 'trade :from-player player
-				      :from-card bad
-				      :from-pos loc
-				      :from-score value
-				      :to-card card
-				      :info nil)))
-					  
-					  
+        collect (make-instance 'trade :from-player player
+                               :from-card bad
+                               :from-pos loc
+                               :from-score value
+                               :to-card card
+                               :info nil)))
+
+
 
 ;; This function takes the player object and a list of
 ;; proposed trades (objects of class "TRADE") and scores
@@ -303,36 +303,36 @@
 ;;    The value function uses probabilities and the current game state
 ;;    to determine the approximate value of a card.
 (defun evaluate-trades (player trades)
-	;;For each of the trades in trade
-	(loop for trade in trades
-		;;If the trade is not a donation
-		do (if (trade-to-card trade)
-				;;viable is a list of indices in our hand where we have to card
-				(let ((viable (viable-trade player trade)))
-					;;If the trade is viable and we have the to bean type in our field
-					 (if (and viable (assoc (trade-from-card trade) (player-fields player)))
-						;;If the from card matches one of our fields
-						 (if (assoc (trade-to-card trade) (player-fields player))
-							;;If it does, accept the trade, but trade the last
-							(push (list player 1 (car (last viable)))
-								(trade-info trade))
-							;;If it does not, accept the trade, but trade the first
-							(push (list player 1 (car viable))
-								(trade-info trade)))
-						;;If the to card matches none of our fields, do not trade.
-						 (push (list player 0) (trade-info trade))
-						)
-				)
-			;;If the trade is a donation and the to card matches one of our fields
-			(if (assoc (trade-from-card trade) (player-fields player))
-				;;Accept the donation if a match
-				(push (list player 1) (trade-info trade))
-				;;Decline the donation if it doesnt match
-				(push (list player 0) (trade-info trade)))
-		)
-	)
-)
-	
+  ;;For each of the trades in trade
+  (loop for trade in trades
+        ;;If the trade is not a donation
+        do (if (trade-to-card trade)
+             ;;viable is a list of indices in our hand where we have to card
+             (let ((viable (viable-trade player trade)))
+               ;;If the trade is viable and we have the to bean type in our field
+               (if (and viable (assoc (trade-from-card trade) (player-fields player)))
+                 ;;If the from card matches one of our fields
+                 (if (assoc (trade-to-card trade) (player-fields player))
+                   ;;If it does, accept the trade, but trade the last
+                   (push (list player 1 (car (last viable)))
+                         (trade-info trade))
+                   ;;If it does not, accept the trade, but trade the first
+                   (push (list player 1 (car viable))
+                         (trade-info trade)))
+                 ;;If the to card matches none of our fields, do not trade.
+                 (push (list player 0) (trade-info trade))
+                 )
+               )
+             ;;If the trade is a donation and the to card matches one of our fields
+             (if (assoc (trade-from-card trade) (player-fields player))
+               ;;Accept the donation if a match
+               (push (list player 1) (trade-info trade))
+               ;;Decline the donation if it doesnt match
+               (push (list player 0) (trade-info trade)))
+             )
+        )
+  )
+
 
 ;; Utility Functions
 ;; chooses a field to harvest
