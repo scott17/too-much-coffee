@@ -149,7 +149,7 @@
 
     (trade 
       (generate-trades player (loop for field in (remove nil (player-fields player)) collect (car field)) (remove nil (list first-card second-card)) game)
-      (game-players game))
+      player)
 
     ; Actually ge the first get the two cards, should come out as nil if card have been traded 
     (setq first-card (pop (player-faceup player))
