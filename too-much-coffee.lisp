@@ -399,10 +399,16 @@
          ; beans-to-next-tier of the current requested bean.
          (prob-get-coin (reduce #'* (loop for i from 0 to (- beans-to-next-tier 1) collect
                                           (let* (
+                                                 ; Deck size.
+                                                 (deck-size (- actual-deck-size i))
                                                  ; Maximum probability of drawing the bean
-                                                 (max-prob (/ (- max-of-type i) (- actual-deck-size i)))
+                                                 (max-prob (if (<= deck-size 0)
+                                                             0
+                                                             (/ (- max-of-type i) deck-size)))
                                                  ; Minimum probability of drawing the bean
-                                                 (min-prob (/ (- min-of-type i) (- actual-deck-size i)))
+                                                 (min-prob (if (<= deck-size 0)
+                                                             0
+                                                             (/ (- min-of-type i) deck-size)))
                                                  ; Average probability of drawing the bean
                                                  (avg-prob (/ (+ max-prob min-prob) 2))
                                                  )
